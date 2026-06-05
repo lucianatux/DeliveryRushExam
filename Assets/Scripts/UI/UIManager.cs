@@ -3,6 +3,7 @@ using DeliveryRushExam.Core;
 using DeliveryRushExam.Data;
 using TMPro;
 using UnityEngine;
+using UnityEngine.Pool;
 using UnityEngine.UI;
 
 namespace DeliveryRushExam.UI
@@ -27,6 +28,8 @@ namespace DeliveryRushExam.UI
         [Header("Popups")]
         [SerializeField] private RectTransform popupsContainer;
         [SerializeField] private ScorePopupView scorePopupPrefab;
+        [SerializeField] private int popupPoolDefaultCapacity = 5;
+        [SerializeField] private int popupPoolMaxSize = 20;
 
         [Header("Panels")]
         [SerializeField] private GameObject gameplayPanel;
@@ -35,6 +38,7 @@ namespace DeliveryRushExam.UI
 
         private readonly List<OrderButtonView> orderViews = new List<OrderButtonView>();
         private Canvas _canvas;
+        private ObjectPool<ScorePopupView> _popupPool;
 
         private void Awake()
         {
@@ -54,6 +58,15 @@ namespace DeliveryRushExam.UI
             }
 
             _canvas = GetComponentInParent<Canvas>();
+
+            _popupPool = new ObjectPool<ScorePopupView>(
+                createFunc: CreatePopup,
+                actionOnGet: OnPopupGet,
+                actionOnRelease: OnPopupRelease,
+                actionOnDestroy: OnPopupDestroy,
+                collectionCheck: false,
+                defaultCapacity: popupPoolDefaultCapacity,
+                maxSize: popupPoolMaxSize);
         }
 
         private void OnEnable()
@@ -141,10 +154,39 @@ namespace DeliveryRushExam.UI
 
         private void ShowScorePopup(OrderData order)
         {
-            ScorePopupView popup = Instantiate(scorePopupPrefab, popupsContainer);
-            popup.gameObject.SetActive(true);
+            ScorePopupView popup = _popupPool.Get();
             popup.transform.localPosition = new Vector3(Random.Range(-90f, 90f), Random.Range(-25f, 35f), 0f);
-            popup.Setup("+" + order.rewardPoints + " points");
+            popup.Setup("+" + order.rewardPoints + " points", ReturnPopupToPool);
+        }
+
+        private ScorePopupView CreatePopup()
+        {
+            ScorePopupView popup = Instantiate(scorePopupPrefab, popupsContainer);
+            popup.gameObject.SetActive(false);
+            return popup;
+        }
+
+        private void OnPopupGet(ScorePopupView popup)
+        {
+            popup.gameObject.SetActive(true);
+        }
+
+        private void OnPopupRelease(ScorePopupView popup)
+        {
+            popup.gameObject.SetActive(false);
+        }
+
+        private void OnPopupDestroy(ScorePopupView popup)
+        {
+            if (popup != null)
+            {
+                Destroy(popup.gameObject);
+            }
+        }
+
+        private void ReturnPopupToPool(ScorePopupView popup)
+        {
+            _popupPool.Release(popup);
         }
     }
 }

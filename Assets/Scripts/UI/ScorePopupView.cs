@@ -1,3 +1,4 @@
+using System;
 using TMPro;
 using UnityEngine;
 
@@ -10,21 +11,35 @@ namespace DeliveryRushExam.UI
         [SerializeField] private float moveSpeed = 55f;
 
         private CanvasGroup _canvasGroup;
+        private Action<ScorePopupView> _onReturn;
         private float age;
+        private bool isReturned;
 
         private void Awake()
         {
             _canvasGroup = GetComponent<CanvasGroup>();
         }
 
-        public void Setup(string message)
+        public void Setup(string message, Action<ScorePopupView> onReturn)
         {
             age = 0f;
+            isReturned = false;
             messageText.text = message;
+            _onReturn = onReturn;
+
+            if (_canvasGroup != null)
+            {
+                _canvasGroup.alpha = 1f;
+            }
         }
 
         private void Update()
         {
+            if (isReturned)
+            {
+                return;
+            }
+
             age += Time.deltaTime;
             transform.localPosition += Vector3.up * moveSpeed * Time.deltaTime;
 
@@ -35,7 +50,8 @@ namespace DeliveryRushExam.UI
 
             if (age >= lifetime)
             {
-                Destroy(gameObject);
+                isReturned = true;
+                _onReturn?.Invoke(this);
             }
         }
     }

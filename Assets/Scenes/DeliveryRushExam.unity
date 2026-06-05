@@ -829,6 +829,8 @@ MonoBehaviour:
   orderButtonPrefab: {fileID: 657774666}
   popupsContainer: {fileID: 1922528519}
   scorePopupPrefab: {fileID: 14142583}
+  popupPoolDefaultCapacity: 5
+  popupPoolMaxSize: 20
   gameplayPanel: {fileID: 727941080}
   resultsPanel: {fileID: 984154977}
   resultsText: {fileID: 477207602}
@@ -899,7 +901,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0b71471cf2b9e4ba491e41582fcba5ea, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DeliveryRushExam.Core.GameManager
-  matchDurationSeconds: 10
+  matchDurationSeconds: 20
   autoStart: 1
   verboseLogs: 0
   orderManager: {fileID: 758901910}
