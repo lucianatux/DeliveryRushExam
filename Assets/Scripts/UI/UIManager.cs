@@ -72,7 +72,9 @@ namespace DeliveryRushExam.UI
         private void OnEnable()
         {
             orderManager.OrdersChanged += RefreshOrderList;
+            orderManager.OrdersChanged += UpdateOrdersCount;
             scoreManager.OrderScored += ShowScorePopup;
+            scoreManager.ScoreChanged += UpdateScoreHud;
         }
 
         private void OnDisable()
@@ -80,25 +82,24 @@ namespace DeliveryRushExam.UI
             if (orderManager != null)
             {
                 orderManager.OrdersChanged -= RefreshOrderList;
+                orderManager.OrdersChanged -= UpdateOrdersCount;
             }
 
             if (scoreManager != null)
             {
                 scoreManager.OrderScored -= ShowScorePopup;
+                scoreManager.ScoreChanged -= UpdateScoreHud;
             }
         }
 
         private void Update()
         {
-            if (scoreManager == null || gameManager == null)
+            if (gameManager == null)
             {
                 return;
             }
 
-            scoreText.text = "Score: " + scoreManager.Score;
-            coinsText.text = "Coins: " + scoreManager.Coins;
             timerText.text = "Time: " + Mathf.CeilToInt(gameManager.RemainingTime);
-            ordersCountText.text = "Orders: " + orderManager.ActiveOrders.Count;
 
             for (int i = 0; i < orderViews.Count; i++)
             {
@@ -129,12 +130,6 @@ namespace DeliveryRushExam.UI
 
         private void RefreshOrderList()
         {
-            OrderManager runtimeOrderManager = FindFirstObjectByType<OrderManager>();
-            if (runtimeOrderManager != null)
-            {
-                orderManager = runtimeOrderManager;
-            }
-
             for (int i = 0; i < orderViews.Count; i++)
             {
                 Destroy(orderViews[i].gameObject);
@@ -150,6 +145,17 @@ namespace DeliveryRushExam.UI
                 view.Setup(orders[i], orderManager.CompleteOrder);
                 orderViews.Add(view);
             }
+        }
+
+        private void UpdateScoreHud(int score, int coins, int completedOrders)
+        {
+            scoreText.text = "Score: " + score;
+            coinsText.text = "Coins: " + coins;
+        }
+
+        private void UpdateOrdersCount()
+        {
+            ordersCountText.text = "Orders: " + orderManager.ActiveOrders.Count;
         }
 
         private void ShowScorePopup(OrderData order)
