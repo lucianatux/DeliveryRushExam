@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using DeliveryRushExam.Core;
 using DeliveryRushExam.Data;
@@ -24,6 +25,8 @@ namespace DeliveryRushExam.UI
         [Header("Orders")]
         [SerializeField] private RectTransform ordersContainer;
         [SerializeField] private OrderButtonView orderButtonPrefab;
+        [SerializeField] private int orderViewPoolDefaultCapacity = 6;
+        [SerializeField] private int orderViewPoolMaxSize = 12;
 
         [Header("Popups")]
         [SerializeField] private RectTransform popupsContainer;
@@ -39,7 +42,12 @@ namespace DeliveryRushExam.UI
         private readonly List<OrderButtonView> orderViews = new List<OrderButtonView>();
         private Canvas _canvas;
         private ObjectPool<ScorePopupView> _popupPool;
+        private ObjectPool<OrderButtonView> _orderViewPool;
         private int _lastTimerSeconds = -1;
+
+        // Delegates cacheados: evita generar un Action nuevo en cada Setup.
+        private Action<string> _completeOrderCallback;
+        private Action<ScorePopupView> _returnPopupCallback;
 
         private void Awake()
         {
@@ -60,6 +68,10 @@ namespace DeliveryRushExam.UI
 
             _canvas = GetComponentInParent<Canvas>();
 
+            // Delegates cacheados una sola vez (se reutilizan en cada Setup de pedido/popup).
+            _completeOrderCallback = orderManager.CompleteOrder;
+            _returnPopupCallback = ReturnPopupToPool;
+
             _popupPool = new ObjectPool<ScorePopupView>(
                 createFunc: CreatePopup,
                 actionOnGet: OnPopupGet,
@@ -68,6 +80,15 @@ namespace DeliveryRushExam.UI
                 collectionCheck: false,
                 defaultCapacity: popupPoolDefaultCapacity,
                 maxSize: popupPoolMaxSize);
+
+            _orderViewPool = new ObjectPool<OrderButtonView>(
+                createFunc: CreateOrderView,
+                actionOnGet: OnOrderViewGet,
+                actionOnRelease: OnOrderViewRelease,
+                actionOnDestroy: OnOrderViewDestroy,
+                collectionCheck: false,
+                defaultCapacity: orderViewPoolDefaultCapacity,
+                maxSize: orderViewPoolMaxSize);
         }
 
         private void OnEnable()
@@ -137,19 +158,19 @@ namespace DeliveryRushExam.UI
 
         private void RefreshOrderList()
         {
+            // En lugar de destruir/instanciar todas las views, las devolvemos a la pool
+            // y pedimos las que haga falta. Mismo patrón que el pool de popups.
             for (int i = 0; i < orderViews.Count; i++)
             {
-                Destroy(orderViews[i].gameObject);
+                _orderViewPool.Release(orderViews[i]);
             }
-
             orderViews.Clear();
 
             IReadOnlyList<OrderData> orders = orderManager.ActiveOrders;
             for (int i = 0; i < orders.Count; i++)
             {
-                OrderButtonView view = Instantiate(orderButtonPrefab, ordersContainer);
-                view.gameObject.SetActive(true);
-                view.Setup(orders[i], orderManager.CompleteOrder);
+                OrderButtonView view = _orderViewPool.Get();
+                view.Setup(orders[i], _completeOrderCallback);
                 orderViews.Add(view);
             }
         }
@@ -168,9 +189,11 @@ namespace DeliveryRushExam.UI
         private void ShowScorePopup(OrderData order)
         {
             ScorePopupView popup = _popupPool.Get();
-            popup.transform.localPosition = new Vector3(Random.Range(-90f, 90f), Random.Range(-25f, 35f), 0f);
-            popup.Setup("+" + order.rewardPoints + " points", ReturnPopupToPool);
+            popup.transform.localPosition = new Vector3(UnityEngine.Random.Range(-90f, 90f), UnityEngine.Random.Range(-25f, 35f), 0f);
+            popup.Setup("+" + order.rewardPoints + " points", _returnPopupCallback);
         }
+
+        // ---------- Popup pool callbacks ----------
 
         private ScorePopupView CreatePopup()
         {
@@ -200,6 +223,33 @@ namespace DeliveryRushExam.UI
         private void ReturnPopupToPool(ScorePopupView popup)
         {
             _popupPool.Release(popup);
+        }
+
+        // ---------- OrderButtonView pool callbacks ----------
+
+        private OrderButtonView CreateOrderView()
+        {
+            OrderButtonView view = Instantiate(orderButtonPrefab, ordersContainer);
+            view.gameObject.SetActive(false);
+            return view;
+        }
+
+        private void OnOrderViewGet(OrderButtonView view)
+        {
+            view.gameObject.SetActive(true);
+        }
+
+        private void OnOrderViewRelease(OrderButtonView view)
+        {
+            view.gameObject.SetActive(false);
+        }
+
+        private void OnOrderViewDestroy(OrderButtonView view)
+        {
+            if (view != null)
+            {
+                Destroy(view.gameObject);
+            }
         }
     }
 }
