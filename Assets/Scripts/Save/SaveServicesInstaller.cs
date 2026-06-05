@@ -14,15 +14,13 @@ namespace DeliveryRushExam.Save
 
         private void Awake()
         {
-            // Registro inicial para que el proyecto funcione.
-            // El punto de extensión esperado es registrar una abstracción común.
             if (saveMode == SaveMode.Local)
             {
-                ServiceLocator.Register(new LocalSaveService());
+                ServiceLocator.Register<ISaveService>(new LocalSaveService());
                 return;
             }
 
-            ServiceLocator.Register(new UgsCloudSaveService());
+            ServiceLocator.Register<ISaveService>(new UgsCloudSaveService());
         }
     }
 }

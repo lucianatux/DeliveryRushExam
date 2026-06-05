@@ -11,17 +11,17 @@ namespace DeliveryRushExam.Save
 
         public event Action<PlayerProgressData> ProgressLoaded;
 
-        private LocalSaveService localSaveService;
+        private ISaveService saveService;
 
         private async void Awake()
         {
-            localSaveService = new LocalSaveService();
+            saveService = ServiceLocator.Get<ISaveService>();
             await LoadProgressAsync();
         }
 
         public async Task LoadProgressAsync()
         {
-            CurrentProgress = await localSaveService.LoadAsync();
+            CurrentProgress = await saveService.LoadAsync();
             ProgressLoaded?.Invoke(CurrentProgress);
         }
 
@@ -34,7 +34,7 @@ namespace DeliveryRushExam.Save
             // Nivel simple para tener un dato extra persistido.
             CurrentProgress.unlockedLevel = Mathf.Max(CurrentProgress.unlockedLevel, 1 + CurrentProgress.completedOrders / 10);
 
-            await localSaveService.SaveAsync(CurrentProgress);
+            await saveService.SaveAsync(CurrentProgress);
         }
     }
 }

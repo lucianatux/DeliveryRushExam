@@ -4,7 +4,7 @@ using UnityEngine;
 
 namespace DeliveryRushExam.Save
 {
-    public class LocalSaveService
+    public class LocalSaveService : ISaveService
     {
         private const string ProgressKey = "delivery_rush_progress";
 
