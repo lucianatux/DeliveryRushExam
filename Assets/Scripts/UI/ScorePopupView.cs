@@ -9,7 +9,13 @@ namespace DeliveryRushExam.UI
         [SerializeField] private float lifetime = 1.1f;
         [SerializeField] private float moveSpeed = 55f;
 
+        private CanvasGroup _canvasGroup;
         private float age;
+
+        private void Awake()
+        {
+            _canvasGroup = GetComponent<CanvasGroup>();
+        }
 
         public void Setup(string message)
         {
@@ -22,10 +28,9 @@ namespace DeliveryRushExam.UI
             age += Time.deltaTime;
             transform.localPosition += Vector3.up * moveSpeed * Time.deltaTime;
 
-            CanvasGroup canvasGroup = GetComponent<CanvasGroup>();
-            if (canvasGroup != null)
+            if (_canvasGroup != null)
             {
-                canvasGroup.alpha = 1f - age / lifetime;
+                _canvasGroup.alpha = 1f - age / lifetime;
             }
 
             if (age >= lifetime)

@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using DeliveryRushExam.Data;
 using UnityEngine;
 
@@ -50,15 +49,20 @@ namespace DeliveryRushExam.Core
                 TrySpawnOrder();
             }
 
+            int expiredCount = 0;
             for (int i = activeOrders.Count - 1; i >= 0; i--)
             {
                 activeOrders[i].remainingTime -= Time.deltaTime;
+
+                if (activeOrders[i].remainingTime <= 0f)
+                {
+                    activeOrders.RemoveAt(i);
+                    expiredCount++;
+                }
             }
-            
-            int expiredCount = activeOrders.Where(order => order.remainingTime <= 0f).Count();
+
             if (expiredCount > 0)
             {
-                activeOrders.RemoveAll(order => order.remainingTime <= 0f);
                 OrdersChanged?.Invoke();
             }
 
@@ -86,13 +90,23 @@ namespace DeliveryRushExam.Core
 
         public void CompleteOrder(string orderId)
         {
-            OrderData order = activeOrders.FirstOrDefault(activeOrder => activeOrder.id == orderId);
-            if (order == null)
+            int idx = -1;
+            for (int i = 0; i < activeOrders.Count; i++)
+            {
+                if (activeOrders[i].id == orderId)
+                {
+                    idx = i;
+                    break;
+                }
+            }
+
+            if (idx < 0)
             {
                 return;
             }
 
-            activeOrders.Remove(order);
+            OrderData order = activeOrders[idx];
+            activeOrders.RemoveAt(idx);
             scoreManager.AddCompletedOrder(order);
             OrdersChanged?.Invoke();
         }

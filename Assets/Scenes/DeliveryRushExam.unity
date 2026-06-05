@@ -899,7 +899,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0b71471cf2b9e4ba491e41582fcba5ea, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DeliveryRushExam.Core.GameManager
-  matchDurationSeconds: 90
+  matchDurationSeconds: 10
   autoStart: 1
   verboseLogs: 0
   orderManager: {fileID: 758901910}
