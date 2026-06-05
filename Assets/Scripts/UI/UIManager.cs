@@ -39,6 +39,7 @@ namespace DeliveryRushExam.UI
         private readonly List<OrderButtonView> orderViews = new List<OrderButtonView>();
         private Canvas _canvas;
         private ObjectPool<ScorePopupView> _popupPool;
+        private int _lastTimerSeconds = -1;
 
         private void Awake()
         {
@@ -99,7 +100,12 @@ namespace DeliveryRushExam.UI
                 return;
             }
 
-            timerText.text = "Time: " + Mathf.CeilToInt(gameManager.RemainingTime);
+            int seconds = Mathf.CeilToInt(gameManager.RemainingTime);
+            if (seconds != _lastTimerSeconds)
+            {
+                timerText.text = "Time: " + seconds;
+                _lastTimerSeconds = seconds;
+            }
 
             for (int i = 0; i < orderViews.Count; i++)
             {
@@ -111,6 +117,7 @@ namespace DeliveryRushExam.UI
         {
             gameplayPanel.SetActive(true);
             resultsPanel.SetActive(false);
+            _lastTimerSeconds = -1; // fuerza primer refresh del timer al iniciar partida
             RefreshOrderList();
         }
 

@@ -11,6 +11,7 @@ namespace DeliveryRushExam.UI
         [SerializeField] private float moveSpeed = 55f;
 
         private CanvasGroup _canvasGroup;
+        private Transform _cachedTransform;
         private Action<ScorePopupView> _onReturn;
         private float age;
         private bool isReturned;
@@ -18,6 +19,7 @@ namespace DeliveryRushExam.UI
         private void Awake()
         {
             _canvasGroup = GetComponent<CanvasGroup>();
+            _cachedTransform = transform;
         }
 
         public void Setup(string message, Action<ScorePopupView> onReturn)
@@ -41,7 +43,7 @@ namespace DeliveryRushExam.UI
             }
 
             age += Time.deltaTime;
-            transform.localPosition += Vector3.up * moveSpeed * Time.deltaTime;
+            _cachedTransform.localPosition += Vector3.up * (moveSpeed * Time.deltaTime);
 
             if (_canvasGroup != null)
             {
